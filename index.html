@@ -1,1 +1,140 @@
+<!DOCTYPE html>
+<html lang="id"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1e3a5f">
+<link rel="manifest" href="manifest.json">
+<title>DALAM COFFEE — Finance Management</title>
+<style>
+:root{--cream:#faf6ee;--navy:#1e3a5f;--teal:#5fb3a8;--ink:#1b2430;--mut:#6b7686;--bad:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--ink);font:16px/1.45 system-ui,"Segoe UI",sans-serif;padding-top:env(safe-area-inset-top)}
+main{max-width:640px;margin:0 auto;padding:14px 14px 110px}
+.card{background:rgba(255,255,255,.72);backdrop-filter:blur(8px);border:1px solid #e8e1d2;border-radius:16px;padding:14px;margin:0 0 12px}
+.card h3{margin:0 0 4px;font-size:.9rem;color:var(--mut);font-weight:600}
+.card b{font-size:1.6rem;color:var(--navy)}
+.card p{margin:4px 0 0;font-size:.85rem;color:var(--mut)}
+.bad{color:var(--bad)!important}.mut{color:var(--mut)}
+.badge{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:99px;background:#e6f4f1;color:#2f7a70;font-size:.78rem}
+.bar{display:flex;gap:8px;margin-bottom:12px}
+select,input,button{font:inherit}
+select,input{width:100%;padding:12px;border:1px solid #d9d2c2;border-radius:12px;background:#fff;margin-top:4px}
+label{display:block;font-size:.85rem;color:var(--mut);margin-bottom:10px}
+form button,#go{width:100%;padding:14px;border:0;border-radius:14px;background:var(--navy);color:#fff;font-weight:600;font-size:1rem}
+form button:disabled{opacity:.5}
+details{background:rgba(255,255,255,.72);border:1px solid #e8e1d2;border-radius:16px;padding:12px 14px;margin-bottom:10px}
+summary{font-weight:600;color:var(--navy)}
+details form{margin-top:10px}
+.br{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;font-size:.82rem;margin-top:6px}
+.br i{display:block;height:8px;border-radius:4px;background:var(--teal)}
+.br em{font-style:normal;color:var(--mut)}
+.row{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-top:1px solid #eee7d8;font-size:.9rem}
+.row.void{opacity:.45;text-decoration:line-through}
+.row button{border:1px solid var(--navy);background:none;color:var(--navy);border-radius:10px;padding:4px 10px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-top:1px solid #e8e1d2;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;background:none;padding:14px 2px;font-size:.78rem;color:var(--mut)}
+nav button.on{color:var(--navy);font-weight:700;box-shadow:inset 0 3px 0 var(--teal)}
+.fab{position:fixed;right:16px;bottom:calc(72px + env(safe-area-inset-bottom));padding:14px 18px;border:0;border-radius:99px;background:var(--teal);color:#fff;font-weight:700;box-shadow:0 6px 18px rgba(30,58,95,.3)}
+#menu{display:none;position:fixed;right:16px;bottom:calc(128px + env(safe-area-inset-bottom));flex-direction:column;gap:8px}
+#menu.on{display:flex}
+#menu button{padding:12px 18px;border:0;border-radius:14px;background:var(--navy);color:#fff}
+.toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;z-index:9;max-width:90%}
+.toast.err{background:var(--bad)}
+.load{padding:40px;text-align:center;color:var(--mut)}
+.login{max-width:320px;margin:20vh auto;text-align:center;padding:0 20px}
+.login h1{color:var(--navy);margin:0}.login p{color:var(--mut);margin:4px 0 20px}.login input{text-align:center;margin-bottom:12px}
+</style></head>
+<body><div id="app"></div>
+<script>
+const API='https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSPQGZqHWYNOUdvUt-RT7QhEatLivus55k57lTj6O2JGalbtI3cOjx_vBwxkxzmDYDY84u0Ej5Er3JnCVSBPstjEQSfroDwKT4BNlMWh3UZUQvuCRdjuC2F1i3oGtRRVKJJYL_oRw8r6H_XrtJRs9FMRxLfwETHerw4pE3sPA12Hv8bBtQxvmpWrNDiUtBftNUzD_Ai_XJ6X8ws3ZO8kdo_Ysjin4_ie3OIPlbAD7aFY_IYXpjXY53xno5EDTUMzS3elUAJihe2E0OEo-TCM7ghj_NPGA&lib=Mqk-HqmpKIL9LuRe9Q8UzOTp7AesQ_qkZ';
+const CABS=['Tanakaraeng','Paranglabbua'];
+const KATS=['Biji kopi','Susu dan creamer','Syrup dan powder','Gula dan bahan tambahan','Es batu','Cup dan kemasan','Peralatan kedai','Listrik dan air','Gaji dan upah','Operasional lainnya'];
+const TABS=[['dash','Dashboard'],['jual','Penjualan'],['keluar','Pengeluaran'],['kas','Kas'],['lap','Laporan']];
+let T=sessionStorage.getItem('t'),cab='Semua',per='bulan',tab='dash',cf='',ct='',hs='Penjualan';
+const $=s=>document.querySelector(s);
+const rp=n=>'Rp'+Math.round(n||0).toLocaleString('id-ID');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const iso=d=>d.toLocaleDateString('sv-SE'),today=()=>iso(new Date());
 
+function range(){const d=new Date(),t=iso(d);
+  if(per=='hari')return[t,t];
+  if(per=='kemarin'){d.setDate(d.getDate()-1);return[iso(d),iso(d)]}
+  if(per=='minggu'){d.setDate(d.getDate()-(d.getDay()+6)%7);return[iso(d),t]}
+  if(per=='bulan')return[t.slice(0,8)+'01',t];
+  return[cf||t,ct||t]}
+function toast(m,e){const x=document.createElement('div');x.className='toast'+(e?' err':'');x.textContent=m;document.body.append(x);setTimeout(()=>x.remove(),3200)}
+async function api(a,d){
+  const r=await fetch(API,{method:'POST',body:JSON.stringify({action:a,token:T,data:d})}).then(r=>r.json());
+  if(!r.ok){if(/Sesi habis/.test(r.error)){sessionStorage.removeItem('t');T=null;showLogin()}throw new Error(r.error)}
+  return r.data}
+
+function showLogin(){
+  $('#app').innerHTML='<div class="login"><h1>DALAM COFFEE</h1><p>Finance Management</p><input id="pin" type="password" inputmode="numeric" placeholder="Masukkan PIN"><button id="go">Masuk</button></div>';
+  $('#go').onclick=async()=>{try{
+    const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'login',pin:$('#pin').value})}).then(r=>r.json());
+    if(!r.ok)throw new Error(r.error);T=r.token;sessionStorage.setItem('t',T);shell()}catch(e){toast(e.message,1)}}}
+
+function shell(){
+  $('#app').innerHTML='<main id="m"></main><div id="menu"><button data-k="jual">Penjualan</button><button data-k="keluar">Pengeluaran</button><button data-k="kas">Modal / Prive / Transfer</button></div><button class="fab" id="fab">+ Tambah Transaksi</button><nav>'+TABS.map(([k,l])=>`<button data-k="${k}">${l}</button>`).join('')+'</nav>';
+  document.querySelectorAll('nav button,#menu button').forEach(b=>b.onclick=()=>{tab=b.dataset.k;render()});
+  $('#fab').onclick=()=>$('#menu').classList.toggle('on');
+  render()}
+
+const bar=()=>`<div class="bar"><select id="fc">${['Semua',...CABS].map(c=>`<option ${c==cab?'selected':''}>${c}</option>`).join('')}</select><select id="fp">${[['hari','Hari ini'],['kemarin','Kemarin'],['minggu','Minggu ini'],['bulan','Bulan ini'],['custom','Custom']].map(([k,l])=>`<option value="${k}" ${k==per?'selected':''}>${l}</option>`).join('')}</select></div>${per=='custom'?`<div class="bar"><input type="date" id="cf" value="${cf}"><input type="date" id="ct" value="${ct}"></div>`:''}`;
+function bindBar(){$('#fc').onchange=e=>{cab=e.target.value;render()};$('#fp').onchange=e=>{per=e.target.value;render()};
+  if($('#cf')){$('#cf').onchange=e=>{cf=e.target.value;render()};$('#ct').onchange=e=>{ct=e.target.value;render()}}}
+function bars(o){const m=Math.max(1,...Object.values(o));return Object.entries(o).map(([k,v])=>`<div class="br"><span>${esc(k)}</span><i style="width:${v/m*100}%"></i><em>${rp(v)}</em></div>`).join('')||'<p>Belum ada data pada periode ini.</p>'}
+const inp=(n,l,t='text',v='')=>`<label>${l}<input name="${n}" type="${t}" value="${v}" ${t=='number'?'inputmode="numeric" min="0"':''}></label>`;
+const sel=(n,l,o)=>`<label>${l}<select name="${n}">${o.map(x=>`<option>${x}</option>`).join('')}</select></label>`;
+const form=(a,body,btn='Simpan')=>`<form data-a="${a}">${body}<button>${btn}</button></form>`;
+const det=(t,a,body,btn)=>`<details><summary>${t}</summary>${form(a,body,btn)}</details>`;
+const dt=()=>inp('tanggal','Tanggal','date',today());
+function list(rs,sheet){return rs.length?rs.map(x=>`<div class="row ${x.Status=='VOID'?'void':''}"><span>${esc(x.Tanggal)} · ${esc(x.Cabang||'')}<br>${esc(x.Item||x.Keterangan||x.Jenis)}</span><span>${rp(x.Nominal)} ${sheet&&x.Status=='AKTIF'?`<button class="void" data-s="${sheet}" data-id="${x.ID}">Batalkan</button>`:''}</span></div>`).join(''):'<p class="mut">Belum ada transaksi.</p>'}
+
+const PAGES={
+ async dash(){const[f,e]=range();const s=await api('ringkas',{cabang:cab,from:f,to:e});
+  return bar()+`<div class="card"><h3>Omzet</h3><b>${rp(s.omzet)}</b><p>Tunai ${rp(s.tunai)} · QRIS ${rp(s.qris)} · ${s.n} rekap</p></div>
+  <div class="card"><h3>Pengeluaran</h3><b>${rp(s.pengeluaran)}</b><p>Bon belum dibayar ${rp(s.utang)}</p>${bars(s.kat)}</div>`+
+  Object.entries(s.kas).filter(([c])=>cab=='Semua'||c==cab).map(([c,k])=>`<div class="card"><h3>Kas ${c} (seharusnya)</h3><b>${rp(k.akhir)}</b><p>Awal ${rp(k.awal)} · Masuk ${rp(k.masuk)} · Keluar ${rp(k.keluar)}</p><p class="${k.selisih?'bad':''}">Selisih penutupan kas: ${rp(k.selisih)}</p></div>`).join('')+
+  `<div class="card"><h3>Laba operasional</h3><b>${rp(s.laba)}</b><p>Omzet ${rp(s.omzet)} − HPP ${rp(s.hpp)} − Beban operasional ${rp(s.ops)}</p><span class="badge">Estimasi: stok opname belum diisi</span></div>`},
+ async jual(){const r=await api('daftar',{sheet:'Penjualan',cabang:'Semua'});
+  return `<div class="card">${form('penjualan',dt()+sel('cabang','Cabang',CABS)+inp('tunai','Penjualan tunai','number')+inp('qris','Penjualan QRIS','number')+inp('ket','Catatan (opsional)'))}</div><div class="card"><h3>Rekap terbaru</h3>${list(r.slice(0,10),'Penjualan')}</div>`},
+ async keluar(){const r=await api('daftar',{sheet:'Pengeluaran',cabang:'Semua'}),u=(await api('daftar',{sheet:'Utang',cabang:'Semua'})).filter(x=>x.Status=='AKTIF'&&x.Nominal>x.Terbayar);
+  return `<div class="card">${form('pengeluaran',dt()+sel('cabang','Cabang',CABS)+inp('item','Nama barang / keperluan')+sel('kategori','Kategori',KATS)+inp('nominal','Nominal','number')+sel('metode','Metode pembayaran',['Tunai','QRIS','Transfer','Utang'])+inp('ket','Catatan (opsional)'))}</div>
+  <div class="card"><h3>Utang belum lunas</h3>${u.length?u.map(x=>`<div class="row"><span>${esc(x.Keterangan)}<br>${esc(x.Cabang)} · sisa ${rp(x.Nominal-x.Terbayar)}</span><button class="pay" data-id="${x.ID}">Bayar</button></div>`).join(''):'<p class="mut">Tidak ada utang.</p>'}</div>
+  <div class="card"><h3>Pengeluaran terbaru</h3>${list(r.slice(0,10),'Pengeluaran')}</div>`},
+ async kas(){const t=today(),s=await api('ringkas',{cabang:'Semua',from:t,to:t});
+  return Object.entries(s.kas).map(([c,k])=>`<div class="card"><h3>Saldo kas ${c}</h3><b>${rp(k.akhir)}</b></div>`).join('')+
+  det('Saldo awal kas','saldoAwal',dt()+sel('cabang','Cabang',CABS)+inp('nominal','Saldo awal','number'))+
+  det('Tambah modal','modal',dt()+sel('cabang','Cabang penerima',CABS)+inp('nominal','Nominal','number')+inp('sumber','Sumber dana')+inp('ket','Catatan'))+
+  det('Prive (ambil uang pribadi)','prive',dt()+sel('cabang','Cabang',CABS)+inp('nominal','Nominal','number')+inp('ket','Keterangan'))+
+  det('Transfer antar-cabang','transfer',dt()+sel('asal','Cabang asal',CABS)+sel('tujuan','Cabang tujuan',[...CABS].reverse())+inp('nominal','Nominal','number')+inp('ket','Keterangan'))+
+  det('Tutup kas harian','tutupKas',dt()+sel('cabang','Cabang',CABS)+inp('aktual','Uang tunai fisik','number')+inp('ket','Keterangan jika ada selisih'),'Tutup kas')},
+ async lap(){const[f,e]=range(),s=await api('ringkas',{cabang:cab,from:f,to:e}),r=await api('daftar',{sheet:hs,cabang:cab});
+  const sheets=['Penjualan','Pengeluaran','Modal dan Prive','Transfer Antar-Cabang','Kas','Penutupan Kas','Utang','Audit Log'];
+  const pc={};s.perCabang.forEach(x=>pc[x.c]=x.omzet);
+  return bar()+`<div class="card"><h3>Laporan penjualan</h3><b>${rp(s.omzet)}</b><p>Tunai ${rp(s.tunai)} · QRIS ${rp(s.qris)}</p>${bars({Tunai:s.tunai,QRIS:s.qris})}</div>
+  <div class="card"><h3>Perbandingan omzet cabang</h3>${bars(pc)}</div>
+  <div class="card"><h3>Pengeluaran per kategori</h3><p>Pembelian bahan ${rp(s.bahan)} · Operasional ${rp(s.ops)} · Utang ${rp(s.utang)}</p>${bars(s.kat)}</div>
+  <div class="card"><h3>Laba</h3><p>Omzet ${rp(s.omzet)}<br>HPP bahan ${rp(s.hpp)}<br>Laba kotor ${rp(s.kotor)}<br>Beban operasional ${rp(s.ops)}<br><b>Laba operasional ${rp(s.laba)}</b></p><span class="badge">Estimasi: stok opname belum diisi</span></div>
+  <div class="card"><h3>Riwayat transaksi</h3><select id="hs">${sheets.map(x=>`<option ${x==hs?'selected':''}>${x}</option>`).join('')}</select>${list(r.slice(0,30),['Penjualan','Pengeluaran','Modal dan Prive','Transfer Antar-Cabang'].includes(hs)?hs:'')}</div>`}
+};
+
+async function render(){
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.k==tab));
+  $('#menu').classList.remove('on');$('#m').innerHTML='<div class="load">Memuat…</div>';
+  try{$('#m').innerHTML=await PAGES[tab]()}catch(e){$('#m').innerHTML=`<div class="card bad">${esc(e.message)}</div>`;return}
+  if($('#fc'))bindBar();
+  document.querySelectorAll('form').forEach(f=>f.onsubmit=async ev=>{ev.preventDefault();
+    const b=f.querySelector('button');b.disabled=true;const d=Object.fromEntries(new FormData(f));
+    try{try{await api(f.dataset.a,d)}catch(e){if(/^DUPLIKAT/.test(e.message)&&confirm(e.message+'\nTetap simpan?'))await api(f.dataset.a,{...d,force:1});else throw e}
+      toast('Tersimpan');render()}catch(e){toast(e.message,1);b.disabled=false}});
+  document.querySelectorAll('.pay').forEach(b=>b.onclick=async()=>{const n=prompt('Nominal pelunasan (tunai)');if(!n)return;
+    try{await api('bayarUtang',{id:b.dataset.id,nominal:n,tanggal:today()});toast('Pelunasan dicatat');render()}catch(e){toast(e.message,1)}});
+  document.querySelectorAll('.void').forEach(b=>b.onclick=async()=>{const a=prompt('Alasan pembatalan?');if(!a)return;
+    try{await api('batal',{sheet:b.dataset.s,id:b.dataset.id,alasan:a});toast('Dibatalkan');render()}catch(e){toast(e.message,1)}});
+  if($('#hs'))$('#hs').onchange=e=>{hs=e.target.value;render()}}
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+T?shell():showLogin();
+</script></body></html>
